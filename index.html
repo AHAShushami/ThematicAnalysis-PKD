@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PKD Function Review | Kementerian Kesihatan Malaysia</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <!-- Leaflet.js for Interactive GIS Map -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Chart.js for visualizations & spider web radar map -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar Navigation with Official KKM Branding -->
+        <aside class="sidebar">
+            <div class="brand">
+                <div class="kkm-logo-container">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/LOGO_KEMENTERIAN_KESIHATAN_MALAYSIA_%28BM%29.png/960px-LOGO_KEMENTERIAN_KESIHATAN_MALAYSIA_%28BM%29.png" alt="Logo Kementerian Kesihatan Malaysia" class="kkm-logo-img">
+                </div>
+                <div class="brand-text">
+                    <h2>PKD Function Review</h2>
+                    <span>Kementerian Kesihatan Malaysia</span>
+                </div>
+            </div>
+
+            <nav class="nav-menu">
+                <button class="nav-item active" data-tab="overview">
+                    <span class="icon">📍</span> District Response Map
+                </button>
+                <button class="nav-item" data-tab="responses">
+                    <span class="icon">📝</span> Respondent Explorer
+                </button>
+                <button class="nav-item" data-tab="spider">
+                    <span class="icon">🕸️</span> 12 EPHF Spider Web Map
+                </button>
+                <button class="nav-item" data-tab="forcefield">
+                    <span class="icon">🛡️</span> Barriers & Assets to Protect
+                </button>
+                <button class="nav-item" data-tab="codebook">
+                    <span class="icon">📚</span> Master Codebook & APA7
+                </button>
+                <button class="nav-item" data-tab="matrix">
+                    <span class="icon">🏛️</span> 12 EPHF Cross-Matrix
+                </button>
+                <button class="nav-item" data-tab="comparison">
+                    <span class="icon">⚖️</span> Cross-District SWOT
+                </button>
+            </nav>
+
+            <div class="sync-card">
+                <div class="sync-status">
+                    <span class="pulse-dot"></span>
+                    <span id="syncText">Live Sheet Connected</span>
+                </div>
+                <button id="btnRefresh" class="btn-refresh">
+                    <span class="icon">🔄</span> Refresh Sheet Data
+                </button>
+                <small id="lastUpdated">Last synced: Just now</small>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Top Header with KKM Corporate Header Banner -->
+            <header class="top-header">
+                <div class="header-brand-wrap">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/LOGO_KEMENTERIAN_KESIHATAN_MALAYSIA_%28BM%29.png/960px-LOGO_KEMENTERIAN_KESIHATAN_MALAYSIA_%28BM%29.png" alt="KKM Banner Logo" class="kkm-header-logo">
+                    <div class="header-title">
+                        <h1 id="pageTitle">PKD Function Review</h1>
+                        <p id="pageSub">Taskforce Rebranding PKD Malaysia • Qualitative Situational Analysis & WHO EPHF (2024) Framework</p>
+                    </div>
+                </div>
+                <div class="header-actions">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="globalSearch" placeholder="Search districts, states, quotes...">
+                    </div>
+                </div>
+            </header>
+
+            <!-- TAB 1: OVERVIEW & MAP (THE FIRST PAGE) -->
+            <section id="tab-overview" class="tab-content active">
+                <!-- KKM Corporate Hero Card -->
+                <div class="response-hero-card">
+                    <div class="hero-text">
+                        <span class="hero-tag">KEMENTERIAN KESIHATAN MALAYSIA • RESPONDENT COVERAGE TRACKER</span>
+                        <h2 id="heroCountText">5 District Health Offices Have Responded</h2>
+                        <p>Geographic mapping of completed situational questionnaires directly from published CSV</p>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="h-stat">
+                            <span class="h-val" id="statRespCount">5</span>
+                            <span class="h-lbl">Districts Answered</span>
+                        </div>
+                        <div class="h-stat">
+                            <span class="h-val" id="statStateCount">5</span>
+                            <span class="h-lbl">States Reached</span>
+                        </div>
+                        <div class="h-stat">
+                            <span class="h-val" id="statTotalCodes">37</span>
+                            <span class="h-lbl">Emergent Codes Defined</span>
+                        </div>
+                        <div class="h-stat">
+                            <span class="h-val" id="statTotalCodeMentions">91</span>
+                            <span class="h-lbl">Total Code Mentions</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GIS MAP CONTAINER -->
+                <div class="map-card">
+                    <div class="card-header">
+                        <h3>🗺️ Interactive Malaysia District Sempadan Map</h3>
+                        <div class="map-legend">
+                            <span class="leg-item"><span class="leg-dot responded"></span> District Responded (Sempadan Highlighted)</span>
+                            <span class="leg-item"><span class="leg-dot pending"></span> Pending Response</span>
+                        </div>
+                    </div>
+                    <div id="malaysiaMap" class="leaflet-map-container"></div>
+                </div>
+
+                <!-- Responded Districts List from CSV -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h3>📋 Published CSV Responded District Health Offices</h3>
+                        <span class="badge" id="respondentCountBadge">5 Submissions</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="custom-table" id="tableRespondents">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Pejabat Kesihatan Daerah (PKD)</th>
+                                    <th>Negeri</th>
+                                    <th>Jawatan / Designation</th>
+                                    <th>Tempoh (Years)</th>
+                                    <th>Tarikh Mula Bertugas</th>
+                                    <th>Sempadan Status</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblRespondentsBody">
+                                <!-- Populated dynamically from CSV -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: RESPONDENT EXPLORER -->
+            <section id="tab-responses" class="tab-content">
+                <div class="filter-bar">
+                    <div class="filter-group">
+                        <label>Filter District:</label>
+                        <select id="filterDistrict">
+                            <option value="ALL">All Districts</option>
+                        </select>
+                    </div>
+                    <div class="filter-group">
+                        <label>Filter Question:</label>
+                        <select id="filterQuestion">
+                            <option value="ALL">All Questions (Soalan 1 - Soalan 5)</option>
+                            <option value="Q1">Soalan 1: Scope & Situational Functions</option>
+                            <option value="Q2">Soalan 2: Strengths</option>
+                            <option value="Q3">Soalan 3: Weaknesses</option>
+                            <option value="Q4">Soalan 4: Opportunities</option>
+                            <option value="Q5">Soalan 5: Threats & Challenges</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="responsesContainer" class="responses-list">
+                    <!-- Populated dynamically from CSV -->
+                </div>
+            </section>
+
+            <!-- SPIDER WEB RADAR MAP TAB (12 WHO EPHFs) -->
+            <section id="tab-spider" class="tab-content">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h3>🕸️ Emergent Theme & Sub-Theme 12 EPHF Spider Web Map</h3>
+                        <span class="tag-badge" id="ephfTotalMentionsBadge">91 Total Code Mentions Extracted</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary);">
+                        This interactive <strong>Spider Web Map</strong> visualizes the qualitative volume of code mentions across all 12 Essential Public Health Functions (WHO EPHF 2024), computed dynamically from the CSV responses.
+                    </p>
+
+                    <!-- CODE COUNT SUMMARY BAR PER EPHF -->
+                    <div class="ephf-counts-summary-bar" id="ephfCountsSummaryBar">
+                        <!-- Populated dynamically with exact code counts -->
+                    </div>
+
+                    <div class="chart-container" style="height: 520px; position: relative;">
+                        <canvas id="ephfSpiderChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- EPHF Category Filter Cards Grid with Code Counts -->
+                <div class="ephf-grid-container" id="ephfBubbleGrid">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- STRUCTURAL BARRIERS TO REFORM VS CORE ASSETS TO PROTECT TAB -->
+            <section id="tab-forcefield" class="tab-content">
+                <div class="response-hero-card" style="background: linear-gradient(135deg, rgba(0, 86, 145, 0.5), rgba(0, 43, 73, 0.9)); border-color: var(--kkm-gold);">
+                    <div class="hero-text">
+                        <span class="hero-tag">DISTRICT HEALTH SYSTEM STRATEGIC REFORM FRAMEWORK</span>
+                        <h2>Structural Barriers to Reform vs. Core Assets to Protect</h2>
+                        <p>Identifying Systemic Bottlenecks Needing Transformation & Essential Public Health Strengths to Safeguard</p>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="h-stat" style="border-color: #ef476f;">
+                            <span class="h-val" style="color: #ef476f;">7</span>
+                            <span class="h-lbl">Structural Barriers</span>
+                        </div>
+                        <div class="h-stat" style="border-color: #10b981;">
+                            <span class="h-val" style="color: #10b981;">7</span>
+                            <span class="h-lbl">Core Assets</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Force Field Visual Balance Chart -->
+                <div class="data-card">
+                    <div class="card-header">
+                        <h3>🛡️ Strategic Priority Matrix: Barriers to Reform vs. Assets to Protect</h3>
+                        <span class="badge">Transformation Goal: Reform Structural Barriers & Safeguard Core Assets</span>
+                    </div>
+                    <div class="chart-container" style="height: 360px;">
+                        <canvas id="forceFieldChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 2-Column Side-by-Side Table -->
+                <div class="forcefield-grid">
+                    <!-- REFORM COLUMN -->
+                    <div class="ff-column restraining">
+                        <div class="ff-column-header">
+                            <h3>🔴 STRUCTURAL BARRIERS NEEDING REFORM & TRANSFORMATION</h3>
+                            <span>Systemic Bottlenecks, Facility Degradation & Policy Gaps requiring Immediate Reform</span>
+                        </div>
+                        <div class="ff-list" id="restrainingForcesList">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+
+                    <!-- PROTECT COLUMN -->
+                    <div class="ff-column driving">
+                        <div class="ff-column-header">
+                            <h3>🟢 CORE STRENGTHS & ESSENTIAL ASSETS TO PROTECT</h3>
+                            <span>Ground Expertise, Team Synergy & Alliances that MUST be Preserved and Safeguarded</span>
+                        </div>
+                        <div class="ff-list" id="drivingForcesList">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: MASTER CODEBOOK & APA 7TH TABLE WITH DATA SATURATION TRACKER -->
+            <section id="tab-codebook" class="tab-content">
+                <!-- Data Saturation Status Banner -->
+                <div class="response-hero-card" style="background: linear-gradient(135deg, rgba(0, 43, 73, 0.95), rgba(16, 185, 129, 0.3)); border-color: #10b981;">
+                    <div class="hero-text">
+                        <span class="hero-tag">QUALITATIVE DATA SATURATION ASSESSMENT ENGINE</span>
+                        <h2 id="saturationStatusText">Theoretical Saturation: Core Themes Saturated (N = 5 PKDs)</h2>
+                        <p id="saturationSubText">Auto-appends new respondent quotes dynamically until theoretical saturation threshold is reached across all 12 EPHFs.</p>
+                    </div>
+                    <div class="hero-stats">
+                        <div class="h-stat" style="border-color: #10b981;">
+                            <span class="h-val" style="color: #34d399;" id="satSampleCount">N = 5</span>
+                            <span class="h-lbl">Sampled Districts</span>
+                        </div>
+                        <div class="h-stat" style="border-color: #f59e0b;">
+                            <span class="h-val" style="color: #f59e0b;" id="satThemeCount">12</span>
+                            <span class="h-lbl">Master Themes</span>
+                        </div>
+                        <div class="h-stat" style="border-color: #60a5fa;">
+                            <span class="h-val" style="color: #60a5fa;" id="satProgressVal">92%</span>
+                            <span class="h-lbl">Saturation Index</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- APA 7th Edition Formatted Table Card -->
+                <div class="data-card" style="background: #ffffff; color: #000000; border: 1px solid #cbd5e1; font-family: 'Times New Roman', Times, serif;">
+                    <div style="border-bottom: 2px solid #000000; padding-bottom: 12px; margin-bottom: 16px;">
+                        <div style="font-weight: bold; font-size: 16px;">Table 1</div>
+                        <div style="font-style: italic; font-size: 14.5px; color: #1e293b;">
+                            Master Qualitative Codebook: Themes, Sub-Themes, Mapped Essential Public Health Functions (EPHF), and Representative Verbatim Respondent Excerpts
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="apa7-table" id="tblApa7Codebook">
+                            <thead>
+                                <tr>
+                                    <th>Master Theme</th>
+                                    <th>Sub-Theme & Mapped EPHF</th>
+                                    <th>Code ID</th>
+                                    <th>Representative Verbatim Respondent Quote (Original Bahasa Melayu / English)</th>
+                                    <th>Sample ID & Location</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblApa7Body">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div style="margin-top: 12px; font-size: 12px; line-height: 1.5; color: #334155;">
+                        <span style="font-style: italic; font-weight: bold;">Note.</span> EPHF = Essential Public Health Functions (WHO 2024 Framework). All qualitative quotes are extracted verbatim from primary questionnaire submissions across the sampled District Health Offices (N = <span id="noteSampleCount">5</span>). Table 1 auto-updates and appends new incoming quotes dynamically until qualitative data saturation is achieved across all 12 EPHF categories.
+                    </div>
+                </div>
+
+                <div class="codebook-container" id="codebookAccordion">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+            <!-- TAB 6: 12 EPHF CROSS-MATRIX -->
+            <section id="tab-matrix" class="tab-content">
+                <div class="data-card">
+                    <div class="card-header">
+                        <h3>12 Essential Public Health Functions (EPHF 2024) Pathway Matrix</h3>
+                        <span class="tag-badge">Initial Category ➔ Sub-Theme ➔ Master Theme ➔ EPHF</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="custom-table" id="tblEphfMatrix">
+                            <thead>
+                                <tr>
+                                    <th>EPHF #</th>
+                                    <th>WHO EPHF Title</th>
+                                    <th>Question</th>
+                                    <th>Initial Data Category / Triggers</th>
+                                    <th>Code ID</th>
+                                    <th>Sub-Theme</th>
+                                    <th>Master Theme</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tblEphfMatrixBody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 7: CROSS-DISTRICT SWOT -->
+            <section id="tab-comparison" class="tab-content">
+                <div class="swot-grid" id="swotGridContainer">
+                    <!-- Populated dynamically -->
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- Modal for Full Respondent Detail -->
+    <div id="respondentModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h2 id="modalRespTitle">Raw CSV Response Data</h2>
+                <button class="btn-close" id="btnCloseModal">✕</button>
+            </div>
+            <div class="modal-body" id="modalRespBody">
+                <!-- Content populated dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
